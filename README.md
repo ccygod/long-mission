@@ -10,6 +10,7 @@ Outcome-driven mission control for complex tasks, PRD execution, UI work, migrat
 ![Protocol](https://img.shields.io/badge/protocol-outcome%20contract-16a34a?style=for-the-badge)
 ![Verification](https://img.shields.io/badge/verification-independent%20gate-7c3aed?style=for-the-badge)
 ![Runtime](https://img.shields.io/badge/runtime-agnostic-f59e0b?style=for-the-badge)
+[![Tests](https://github.com/ccygod/long-mission/actions/workflows/tests.yml/badge.svg)](https://github.com/ccygod/long-mission/actions/workflows/tests.yml)
 
 <a href="#quick-start">Quick start</a> ·
 <a href="#how-it-works">How it works</a> ·
