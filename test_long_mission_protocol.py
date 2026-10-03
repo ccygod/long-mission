@@ -37,6 +37,38 @@ class LongMissionProtocolTests(unittest.TestCase):
                 ["real_user_surface", "artifact_parity"],
             )
 
+    def test_visual_profile_enables_ten_attempt_real_surface_loop(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mission = Path(directory) / "visual"
+            run_script("mission_init.py", str(mission), "--objective", "visual test", "--profile", "visual_ui")
+            state = json.loads((mission / "state.json").read_text())
+            self.assertEqual(state["acceptance_profile"], "visual_ui")
+            self.assertEqual(state["max_iterations"], 10)
+            self.assertEqual(state["visual_loop"]["max_attempts"], 10)
+            self.assertTrue(state["visual_loop"]["enabled"])
+
+    def test_visual_gate_requires_real_evidence_and_accepts_computer_use_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            mission = root / "visual-gate"
+            run_script("mission_init.py", str(mission), "--objective", "visual gate", "--profile", "visual_ui")
+            state_path = mission / "state.json"
+            state = json.loads(state_path.read_text())
+            state["visual_loop"]["attempts"] = [{
+                "attempt": 1,
+                "verifier": "computer_use",
+                "settled": True,
+                "interaction": "clicked representative node and opened detail card",
+                "evidence": ["evidence/attempt-1.png"],
+                "status": "pass",
+            }]
+            evidence = mission / "evidence" / "attempt-1.png"
+            evidence.parent.mkdir()
+            evidence.write_bytes(b"fake screenshot fixture")
+            state_path.write_text(json.dumps(state), encoding="utf-8")
+            result = run_script("visual_gate.py", str(mission))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_prd_mode_creates_interpretation_template(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

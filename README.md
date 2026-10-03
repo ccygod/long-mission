@@ -1,6 +1,6 @@
 # Long Mission
 
-> Version 1.0.1 — stricter runtime truth, PRD completion, and positive/negative receipt verification.
+> Version 1.0.2 — adds a visual/UI mission mode with real-surface screenshot gates and a default ten-attempt cap.
 
 <div align="center">
 
@@ -190,7 +190,7 @@ For a PRD:
 python3 scripts/mission_init.py .long-mission/my-prd \
   --objective "Implement the approved specification" \
   --prd docs/spec.md \
-  --profile reference_ui \
+  --profile visual_ui \
   --deliverable src/feature.ts \
   --acceptance "real user surface passes"
 ```
@@ -230,6 +230,13 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 ## Credits and references
 
 Long Mission is informed by practical work with Codex, Superpowers-style engineering workflows, spec-driven planning, persistent planning files, and long-running agent harnesses. It borrows ideas; it is not a copy of any one upstream project.
+
+## 1.0.2 highlights
+
+- **Visual/UI mission mode:** use `--profile visual_ui` for layout, spacing, topology, arrows, overlap, loading, and interaction work.
+- **Real-surface proof:** Computer Use is preferred; a settled real-browser screenshot is the explicit fallback. Unit tests, DOM snapshots, or a stale tab cannot close a visual mission.
+- **Ten-attempt cap:** the mission and visual loop default to 10 attempts. Override the mission budget explicitly with `--max-iterations`; visual attempts remain capped by the mission adapter.
+- **Independent visual gate:** every attempt records verifier, settled state, representative interaction, screenshot evidence, and pass/fail status.
 
 ## 1.0.1 highlights
 

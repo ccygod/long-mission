@@ -24,7 +24,7 @@ def main() -> int:
     args = parser.parse_args()
     mission = args.mission_dir.expanduser().resolve()
     state = load_state(mission)
-    limit = args.max_iterations or int(state.get("max_iterations", 50))
+    limit = args.max_iterations or int(state.get("max_iterations", 10))
     log_dir = mission / "runs"
     log_dir.mkdir(exist_ok=True)
     for _ in range(limit):

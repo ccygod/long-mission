@@ -147,6 +147,12 @@ def main() -> int:
         if result.returncode != 0:
             problems.append("reference capability/acceptance gate failed")
             problems.extend(line[2:] for line in result.stdout.splitlines() if line.startswith("- "))
+    if state.get("acceptance_profile") == "visual_ui":
+        visual_gate = Path(__file__).with_name("visual_gate.py")
+        result = subprocess.run([str(visual_gate), str(mission)], cwd=mission, text=True, capture_output=True)
+        if result.returncode != 0:
+            problems.append("visual UI gate failed")
+            problems.extend(line[2:] for line in result.stdout.splitlines() if line.startswith("- "))
     if problems:
         print("INCOMPLETE")
         print("未完成")

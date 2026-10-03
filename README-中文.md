@@ -1,6 +1,6 @@
 # Long Mission 中文说明
 
-> 版本 1.0.1：加强运行实例真值、PRD 完成门和正/负回执验收。
+> 版本 1.0.2：增加视觉/UI 专项任务模式、真实页面截图验收和默认十次尝试上限。
 
 > English version: [README.md](README.md)
 
@@ -129,7 +129,7 @@ python3 scripts/mission_start.py .long-mission/my-task \
 python3 scripts/mission_init.py .long-mission/my-prd \
   --objective "执行已批准的 PRD" \
   --prd docs/spec.md \
-  --profile reference_ui
+  --profile visual_ui
 ```
 
 ## 与传统长任务 Skill 的差异
@@ -154,6 +154,13 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 ## 边界
 
 Long Mission 能约束流程和完成声明，但不能让宿主进程在回合结束后无限运行。需要持续执行时，应使用 continuation prompt 或受限的 `mission_runner.py`。
+
+## 1.0.2 更新
+
+- **视觉/UI 专项模式：**涉及布局、间距、拓扑、箭头、遮挡、加载状态或交互显示时，使用 `--profile visual_ui`。
+- **真实用户界面验收：**优先使用 Computer Use；不可用时才使用已经稳定加载的真实浏览器截图。单元测试、DOM 快照或旧页面截图不能单独通过视觉验收。
+- **十次上限：**任务和视觉循环默认最多 10 次。可以通过 `--max-iterations` 显式覆盖任务总迭代数；视觉尝试仍由任务适配器单独限制。
+- **独立视觉门：**每次尝试必须记录验证方式、异步稳定状态、代表性交互、截图证据及通过/失败结果。
 
 ## 1.0.1 更新
 

@@ -17,16 +17,16 @@ def main() -> int:
     parser.add_argument("--objective", required=True)
     parser.add_argument("--deliverable", action="append", default=[])
     parser.add_argument("--acceptance", action="append", default=[])
-    parser.add_argument("--profile", choices=["standard", "reference_ui", "capability_sensitive"], default="standard")
+    parser.add_argument("--profile", choices=["standard", "visual_ui", "reference_ui", "capability_sensitive"], default="standard")
     parser.add_argument("--prd", type=Path, default=None, help="optional PRD/specification path")
-    parser.add_argument("--max-iterations", type=int, default=50)
+    parser.add_argument("--max-iterations", type=int, default=10)
     args = parser.parse_args()
     mission = args.mission_dir.expanduser().resolve()
     if (mission / "state.json").exists():
         raise SystemExit(f"refusing to overwrite existing mission: {mission}")
     mission.mkdir(parents=True, exist_ok=True)
     verification_gates = []
-    if args.profile in {"reference_ui", "capability_sensitive"}:
+    if args.profile in {"visual_ui", "reference_ui", "capability_sensitive"}:
         verification_gates = [
             {"id": "real_user_surface", "required": True, "checks": [], "evidence": []},
             {"id": "artifact_parity", "required": True, "checks": [], "evidence": []},
@@ -63,6 +63,13 @@ def main() -> int:
         "acceptance_checks": [],
         "acceptance_matrix": [],
         "verification_gates": verification_gates,
+        "visual_loop": {
+            "enabled": args.profile == "visual_ui",
+            "max_attempts": 10,
+            "attempts": [],
+            "required_evidence": ["real_user_surface_screenshot", "settled_state", "representative_interaction"],
+            "status": "pending" if args.profile == "visual_ui" else "not_applicable",
+        },
         "completion_receipt": None,
         "report_path": "MISSION-REPORT.md",
         "capability_probe": {"status": "pending", "attempts": [], "ceiling": None, "next_action": "run a minimal representative feasibility probe"} if args.profile != "standard" else {"status": "not_applicable"},

@@ -28,7 +28,7 @@ def main() -> int:
     parser.add_argument("--scope")
     parser.add_argument("--risk")
     parser.add_argument("--limits")
-    parser.add_argument("--profile", choices=["standard", "reference_ui", "capability_sensitive"], default="standard")
+    parser.add_argument("--profile", choices=["standard", "visual_ui", "reference_ui", "capability_sensitive"], default="standard")
     parser.add_argument("--non-interactive", action="store_true")
     args = parser.parse_args()
 

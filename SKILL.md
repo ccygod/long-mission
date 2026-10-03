@@ -5,7 +5,7 @@ description: Use when the user explicitly asks for long-mission/long-task execut
 
 # Long Mission
 
-Protocol version: **1.0.1**.
+Protocol version: **1.0.2**.
 
 This skill turns a long task into a durable mission with an explicit contract, append-only progress ledger, independent acceptance gate, stall detector, and resumable continuation prompt. It is a control loop, not a promise that the host process will run after it exits.
 
@@ -27,7 +27,7 @@ For automation or when the contract is already explicit, pass the fields as flag
 
 The five question classes are: desired outcome, required artifacts, observable done checks, exclusions/confirmation boundaries, and time/iteration/cost limits. This is an alignment gate, not a request to approve every implementation detail.
 
-When the task includes a reference image, screenshot, mockup, or “make it look like this”, initialize the mission with `--profile reference_ui`. This activates a reference contract, a minimal feasibility probe, capability-ceiling detection, and a visual/interaction acceptance gate. A reference image is not an executable specification until its structure, relationships, interactions, responsive states, and allowed deviations are recorded in the mission adapter.
+When the task explicitly concerns UI, layout, visual polish, visual regressions, topology/flow diagrams, spacing, arrows, overlap, or “make it look like this”, initialize the mission with `--profile visual_ui`. This activates the visual/UI loop, a real-user-surface gate, artifact/runtime parity, and a ten-attempt cap. When the task includes a reference image, screenshot, or mockup, also record its structure, relationships, interactions, responsive states, and allowed deviations in the mission adapter. Use `reference_ui` for non-UI reference-driven work that still needs the older capability contract.
 
 The readiness gate then creates a mission before substantial work:
 
@@ -36,6 +36,11 @@ python3 ~/.agents/skills/long-mission/scripts/mission_init.py \
   .long-mission/<slug> --objective "..." \
   --deliverable path/to/output --acceptance "tests pass"
 ```
+
+For a visual/UI mission, use `--profile visual_ui`. The default mission and visual
+attempt budget is **10**. This is a maximum, not a requirement to make ten edits.
+Stop earlier only after the real-surface visual gate passes; exhaust the budget as
+`incomplete` or `blocked`, never as success.
 
 Read `MISSION.md`, `state.json`, and `PROGRESS.md`. Keep the current objective, scope, exclusions, deliverables, acceptance checks, blockers, and next action there—not only in chat context.
 
@@ -110,7 +115,32 @@ Use `plan.status = hypothesis|selected|superseded` and increment `plan.version`.
 5. If it fails, diagnose the listed gap and continue. Never convert a failing gate into “done”.
 6. Run `stall_detector.py`; after repeated no-progress iterations, change strategy or record a real blocker.
 
-For `reference_ui` and `capability_sensitive` missions, also run `reference_gate.py`. A pending capability probe, an empty acceptance matrix, an unrecorded degraded result, or a critical item marked degraded/blocked cannot pass the gate.
+### Visual/UI specialist loop
+
+When `visual_ui` is active, every material UI change must be followed by a fresh
+real-surface check before it can count as progress:
+
+1. Deploy or reload the exact build under test and confirm source/build/runtime parity.
+2. Prefer **Computer Use** on the actual supported desktop/browser surface. If it
+   is unavailable, use an actual settled browser screenshot and record the degraded
+   verifier explicitly; Playwright/DOM/unit output alone is not visual acceptance.
+3. Wait for asynchronous data, loading, fonts, animations, and layout settling.
+4. Exercise a representative interaction (for example select the affected prompt,
+   open a node/card, scroll the affected region, or resize the viewport).
+5. Capture an inspectable full or affected-surface screenshot and record what changed,
+   what remains wrong, and the next falsifiable action in `visual_loop.attempts`.
+6. Inspect structure, topology/relationships, alignment, overlap, clipping, arrows,
+   loading/empty/error states, interaction results, and user-visible data counts.
+
+The visual gate requires a real screenshot, settled state, and representative
+interaction for each recorded attempt, and at least one passing attempt. A screenshot
+from before the final build, a stale tab, or a self-report of “looks fixed” does not
+count. The loop has a default maximum of ten attempts; after ten unsuccessful visual
+iterations, replan or report the capability/implementation blocker instead of silently
+continuing or claiming completion. The visual mode is conditional and adds no cost to
+ordinary non-visual missions.
+
+For `visual_ui`, `reference_ui`, and `capability_sensitive` missions, also run `reference_gate.py`. A pending capability probe, an empty acceptance matrix, an unrecorded degraded result, or a critical item marked degraded/blocked cannot pass the gate. `visual_ui` additionally runs `visual_gate.py`.
 
 Only report **complete** after the gate exits 0 and the evidence is present. To prevent a stale or hand-edited status, close the mission through:
 
