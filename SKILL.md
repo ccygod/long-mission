@@ -5,6 +5,8 @@ description: Use when the user explicitly asks for long-mission/long-task execut
 
 # Long Mission
 
+Protocol version: **1.0.1**.
+
 This skill turns a long task into a durable mission with an explicit contract, append-only progress ledger, independent acceptance gate, stall detector, and resumable continuation prompt. It is a control loop, not a promise that the host process will run after it exits.
 
 ## Invocation boundary
@@ -182,6 +184,12 @@ When a UI projects receipts, counters, or route status, declare a separate
 (or the task's equivalent). Assert that parent aggregates are not copied into
 child nodes and that `unknown`/`not_measured` are not rendered as numeric zero.
 
+For observability or monitoring engines, require both a positive and a negative
+fixture: one real or controlled receipt that produces an event, and one no-call
+or empty receipt that remains explicitly empty. A page showing zero counters is
+not evidence that the engine works unless the loading state, source scope, and
+empty-state semantics are also verified.
+
 ### Source/build/runtime parity gate
 
 Declare `id: "artifact_parity"` when source, generated artifacts, a deployed
@@ -191,6 +199,34 @@ runtime identity (revision, digest, timestamp, or equivalent) and fails on
 mismatch. Do not infer parity from a successful build or a server health check
 alone. Paths and commands stay in the adapter; this Skill never assumes a
 repository layout, framework, port, provider, or release mechanism.
+
+### Runtime truth (required when a real service is involved)
+
+Artifact parity is not enough when a launch agent, supervisor, container, or
+multiple local ports can serve different releases. Add a runtime-truth check to
+the mission adapter that proves all of the following refer to the same release:
+
+```text
+source revision → build identity → supervisor working directory → listening PID/port → browser-visible marker
+```
+
+The check must detect IPv4/IPv6 or stale-port shadowing, read the actual process
+working directory, and verify a version/revision marker from the real user URL.
+A successful build or a healthy endpoint alone is not runtime truth.
+
+### PRD completion gate
+
+When a PRD audit contains a `Partial`, `Blocked`, or unresolved row, the mission
+cannot be closed as complete. Use the bundled checker when the adapter writes a
+markdown audit:
+
+```bash
+python3 scripts/prd_audit_gate.py path/to/PRD-AUDIT.md
+```
+
+If a partial item is intentionally deferred, keep the mission `incomplete` or
+create a separately scoped follow-up; do not narrow the deliverables merely to
+make the independent gate pass.
 
 ### Conditional process-memory gate
 

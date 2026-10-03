@@ -1,5 +1,7 @@
 # Long Mission 中文说明
 
+> 版本 1.0.1：加强运行实例真值、PRD 完成门和正/负回执验收。
+
 > English version: [README.md](README.md)
 
 **让 Agent 能持续完成复杂任务，同时保留探索和换路线的自由。**
@@ -152,6 +154,13 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 ## 边界
 
 Long Mission 能约束流程和完成声明，但不能让宿主进程在回合结束后无限运行。需要持续执行时，应使用 continuation prompt 或受限的 `mission_runner.py`。
+
+## 1.0.1 更新
+
+- 新增 PRD 审计门：存在 `Partial` 或 `Blocked` 项时，不能伪装成已完成。
+- 新增 `scripts/runtime_truth.py`：核对真实 URL 标识、监听 PID 和进程工作目录，能发现旧端口、IPv4/IPv6 遮蔽和旧监管版本问题。
+- 监控类任务必须同时验证正向回执和负向/未调用夹具，并把加载中、未知和 0 分开。
+- 协议测试扩展到 31 项。
 
 ## 许可证
 

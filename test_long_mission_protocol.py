@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -132,6 +133,39 @@ class LongMissionProtocolTests(unittest.TestCase):
             result = run_script("mission_runner.py", str(mission), "--command", "echo {prompt}", check=False)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("stale complete status", result.stderr)
+
+    def test_prd_audit_gate_rejects_unresolved_partial_items(self):
+        with tempfile.TemporaryDirectory() as directory:
+            audit = Path(directory) / "PRD-AUDIT.md"
+            audit.write_text("| Deep Audit | Partial | evaluator queue deferred |\n", encoding="utf-8")
+            result = run_script("prd_audit_gate.py", str(audit), check=False)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("partial", result.stdout.lower())
+
+    def test_prd_audit_gate_accepts_all_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            audit = Path(directory) / "PRD-AUDIT.md"
+            audit.write_text("| Event Contract | Pass | tests |\n| UI | Pass | browser |\n", encoding="utf-8")
+            result = run_script("prd_audit_gate.py", str(audit))
+            self.assertEqual(result.returncode, 0)
+
+    def test_skill_mentions_runtime_truth_and_positive_negative_fixtures(self):
+        skill = (ROOT / "SKILL.md").read_text(encoding="utf-8").lower()
+        self.assertIn("runtime truth", skill)
+        self.assertIn("positive", skill)
+        self.assertIn("negative", skill)
+
+    def test_runtime_truth_checks_url_and_process_working_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            port = 18000 + (hash(directory) % 1000)
+            server = subprocess.Popen([sys.executable, "-m", "http.server", str(port)], cwd=directory, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            try:
+                time.sleep(0.4)
+                result = run_script("runtime_truth.py", "--url", f"http://127.0.0.1:{port}", "--expect", "Directory listing", "--port", str(port), "--working-directory", directory)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn('"status": "passed"', result.stdout)
+            finally:
+                server.terminate(); server.wait(timeout=3)
 
 
 if __name__ == "__main__":

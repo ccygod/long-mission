@@ -1,5 +1,7 @@
 # Long Mission
 
+> Version 1.0.1 — stricter runtime truth, PRD completion, and positive/negative receipt verification.
+
 <div align="center">
 
 **Long-running execution for AI agents — with freedom to explore and proof before completion.**
@@ -228,6 +230,13 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 ## Credits and references
 
 Long Mission is informed by practical work with Codex, Superpowers-style engineering workflows, spec-driven planning, persistent planning files, and long-running agent harnesses. It borrows ideas; it is not a copy of any one upstream project.
+
+## 1.0.1 highlights
+
+- Adds a PRD audit gate so unresolved `Partial` or `Blocked` rows cannot be silently presented as complete.
+- Adds `scripts/runtime_truth.py` to verify the URL marker, listening PID, and actual process working directory. This catches stale ports, IPv4/IPv6 shadowing, and old supervised releases.
+- Requires monitoring missions to verify both a positive receipt and a negative/no-call fixture, with loading and unknown states kept distinct from numeric zero.
+- Expands protocol coverage to 31 tests.
 
 ## License
 
