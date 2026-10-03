@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Long Mission State",
+  "type": "object",
+  "required": ["schema_version", "mission_id", "status", "objective", "iteration", "next_action"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "mission_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["active", "paused", "blocked", "failed", "complete", "degraded_pass", "blocked_engine", "needs_user_decision"]},
+    "acceptance_profile": {"enum": ["standard", "reference_ui", "capability_sensitive"]},
+    "objective": {"type": "string", "minLength": 1},
+    "deliverables": {"type": "array", "items": {"type": "string"}},
+    "verified_outputs": {"type": "array", "items": {"type": "string"}},
+    "open_questions": {"type": "array"},
+    "acceptance_checks": {"type": "array"},
+    "verification_gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "checks", "evidence"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "required": {"type": "boolean"},
+          "checks": {"type": "array"},
+          "evidence": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "acceptance_matrix": {"type": "array"},
+    "capability_probe": {"type": "object"},
+    "attempts": {"type": "array"},
+    "iteration": {"type": "integer", "minimum": 0},
+    "max_iterations": {"type": "integer", "minimum": 1},
+    "no_progress_count": {"type": "integer", "minimum": 0},
+    "next_action": {"type": "string", "minLength": 1}
+  }
+}
