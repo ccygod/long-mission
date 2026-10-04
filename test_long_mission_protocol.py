@@ -166,6 +166,40 @@ class LongMissionProtocolTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("stale complete status", result.stderr)
 
+    def test_runner_required_gate_allows_internal_finalize_but_not_external_close(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mission = Path(directory) / "runner-gate"
+            run_script("mission_init.py", str(mission), "--objective", "runner gate test")
+            state_path = mission / "state.json"
+            state = json.loads(state_path.read_text())
+            state["user_confirmation"] = "confirmed"
+            state["runner"] = {"required": True, "status": "running", "pid": 1}
+            state["deliverables"] = []
+            state["verified_outputs"] = []
+            state["acceptance_checks"] = [{"name": "true", "command": ["true"]}]
+            state_path.write_text(json.dumps(state))
+            (mission / "MISSION-REPORT.md").write_text("# Report\n\n## English\n\n## 中文\n", encoding="utf-8")
+            external = run_script("acceptance_gate.py", str(mission), check=False)
+            self.assertNotEqual(external.returncode, 0)
+            self.assertIn("supervisor runner not complete", external.stdout)
+            internal = run_script("acceptance_gate.py", str(mission), "--runner-finalizing", check=False)
+            self.assertEqual(internal.returncode, 0)
+
+    def test_runner_retries_failed_command_until_budget(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mission = Path(directory) / "runner-retry"
+            run_script("mission_init.py", str(mission), "--objective", "retry test", "--max-iterations", "2")
+            state_path = mission / "state.json"
+            state = json.loads(state_path.read_text())
+            state["user_confirmation"] = "confirmed"
+            state_path.write_text(json.dumps(state))
+            result = run_script("mission_runner.py", str(mission), "--command", "sh -c 'exit 7' {prompt}", check=False)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("RETRY", result.stdout)
+            state = json.loads(state_path.read_text())
+            self.assertEqual(state["runner"]["status"], "budget_exhausted")
+            self.assertEqual(state["status"], "active")
+
     def test_prd_audit_gate_rejects_unresolved_partial_items(self):
         with tempfile.TemporaryDirectory() as directory:
             audit = Path(directory) / "PRD-AUDIT.md"

@@ -5,7 +5,7 @@ description: Use when the user explicitly asks for long-mission/long-task execut
 
 # Long Mission
 
-Protocol version: **1.0.2**.
+Protocol version: **1.0.5**.
 
 This skill turns a long task into a durable mission with an explicit contract, append-only progress ledger, independent acceptance gate, stall detector, and resumable continuation prompt. It is a control loop, not a promise that the host process will run after it exits.
 
@@ -64,6 +64,33 @@ independent gate must reject a mission whose `user_confirmation` is `pending`.
 Read-only discovery and contract drafting are allowed before confirmation; execution
 is not. This gate is especially important for multi-variant comparisons: every
 candidate, URL, screenshot, and selection rule must be visible before work begins.
+
+### Script-owned continuation
+
+After confirmation, execution must be handed to the supervisor when the task is
+described as continuous, uninterrupted, or “do not stop”:
+
+```bash
+python3 scripts/mission_launch.py .long-mission/<slug> \
+  --command "<bounded-agent-command> {prompt}"
+```
+
+The supervisor launches `mission_runner.py` and records its PID and status. The
+runner owns continuation, invokes the bounded command repeatedly, runs the
+independent acceptance gate after every iteration, and closes only after the gate
+passes. An agent response saying “done”, a successful individual command, or the end
+of a chat turn cannot stop the mission. If no command/runner is available, the mission
+must remain `awaiting runner`/`incomplete` and the limitation must be reported; never
+describe it as background execution.
+
+A failed model/tool iteration is recorded and retried by the supervisor; it is not
+itself permission to stop. Only an explicit human boundary (pause/block), a passed
+independent gate, or exhaustion of the declared budget can end the supervised loop.
+
+Completion also requires a bilingual `MISSION-REPORT.md` (English first, Chinese
+second) containing the objective, acceptance contract, execution log, evidence,
+failures, deviations, and final URLs/artifacts. This file is the directly openable
+execution log, not merely a chat link.
 
 ## PRD execution mode
 

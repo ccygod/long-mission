@@ -12,12 +12,16 @@ from common import load_state
 def main() -> int:
     parser = argparse.ArgumentParser(description="Independent completion gate.")
     parser.add_argument("mission_dir", type=Path)
+    parser.add_argument("--runner-finalizing", action="store_true", help="internal runner pre-close check")
     args = parser.parse_args()
     mission = args.mission_dir.expanduser().resolve()
     state = load_state(mission)
     problems: list[str] = []
     if state.get("user_confirmation") == "pending":
         problems.append("user confirmation is pending: review the mission contract before execution")
+    runner = state.get("runner", {})
+    if not args.runner_finalizing and isinstance(runner, dict) and runner.get("required") and runner.get("status") not in {"complete"}:
+        problems.append(f"supervisor runner not complete: {runner.get('status', 'unknown')}")
     if state.get("status") in {"blocked", "paused", "failed"}:
         problems.append(f"status={state['status']}")
     if state.get("status") == "complete" and not isinstance(state.get("completion_receipt"), dict):
