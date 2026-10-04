@@ -66,6 +66,30 @@ def main() -> int:
             passed = True
     if not passed:
         problems.append("no visual attempt has status=pass")
+    variants = state.get("visual_variants", [])
+    if variants:
+        if not isinstance(variants, list):
+            problems.append("visual_variants must be a list")
+        else:
+            for index, variant in enumerate(variants, 1):
+                if not isinstance(variant, dict):
+                    problems.append(f"visual variant {index} is not an object")
+                    continue
+                for field in ("id", "url", "evidence", "status"):
+                    if not variant.get(field):
+                        problems.append(f"visual variant {index} missing {field}")
+                evidence = variant.get("evidence") if isinstance(variant.get("evidence"), list) else [variant.get("evidence")]
+                for item in evidence:
+                    if not isinstance(item, str) or not item:
+                        problems.append(f"visual variant {index} has invalid evidence")
+                        continue
+                    path = Path(item).expanduser()
+                    if not path.is_absolute():
+                        path = mission / path
+                    if not path.is_file():
+                        problems.append(f"missing evidence for visual variant {variant.get('id')}: {item}")
+                if variant.get("status") != "pass":
+                    problems.append(f"visual variant not passed: {variant.get('id')}")
     if problems:
         print("INCOMPLETE")
         print("未完成")

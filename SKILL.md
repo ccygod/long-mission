@@ -140,6 +140,16 @@ iterations, replan or report the capability/implementation blocker instead of si
 continuing or claiming completion. The visual mode is conditional and adds no cost to
 ordinary non-visual missions.
 
+#### Multi-variant visual missions
+
+If the objective asks for multiple engines, methods, pages, themes, or candidate
+implementations, every candidate is a required deliverable. The mission adapter must
+declare `visual_variants`, with one unique `id`, real user URL, screenshot evidence,
+interaction evidence, and pass/fail status per candidate. The mission cannot close when
+only one preferred candidate is complete: all candidate URLs must be opened in the
+supported real host and checked before comparison or selection. A comparison table or
+source file without a reachable URL is not a completed candidate.
+
 For `visual_ui`, `reference_ui`, and `capability_sensitive` missions, also run `reference_gate.py`. A pending capability probe, an empty acceptance matrix, an unrecorded degraded result, or a critical item marked degraded/blocked cannot pass the gate. `visual_ui` additionally runs `visual_gate.py`.
 
 Only report **complete** after the gate exits 0 and the evidence is present. To prevent a stale or hand-edited status, close the mission through:
