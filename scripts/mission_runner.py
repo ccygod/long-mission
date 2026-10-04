@@ -21,6 +21,7 @@ def main() -> int:
     parser.add_argument("mission_dir", type=Path)
     parser.add_argument("--command", required=True, help="command template; use {prompt}")
     parser.add_argument("--max-iterations", type=int, default=None)
+    parser.add_argument("--command-timeout", type=int, default=900, help="seconds allowed for one bounded command")
     args = parser.parse_args()
     mission = args.mission_dir.expanduser().resolve()
     state = load_state(mission)
@@ -49,6 +50,8 @@ def main() -> int:
         )
         argv = [token.replace("{prompt}", prompt) for token in shlex.split(args.command)]
         run_no = int(state.get("iteration", 0)) + 1
+        state["iteration"] = run_no
+        save_state(mission, state)
         guard = subprocess.run(
             ["python3", str(Path(__file__).with_name("guard_command.py")), json.dumps(argv)],
             text=True,
@@ -61,7 +64,10 @@ def main() -> int:
             save_state(mission, state)
             print("BLOCKED: command guard rejected the proposed command")
             return 1
-        result = subprocess.run(argv, cwd=mission, text=True, capture_output=True)
+        try:
+            result = subprocess.run(argv, cwd=mission, text=True, capture_output=True, timeout=args.command_timeout)
+        except subprocess.TimeoutExpired as exc:
+            result = subprocess.CompletedProcess(argv, -124, exc.stdout or "", (exc.stderr or "") + f"\ncommand timeout after {args.command_timeout}s\n")
         (log_dir / f"iteration-{run_no}.stdout").write_text(result.stdout, encoding="utf-8")
         (log_dir / f"iteration-{run_no}.stderr").write_text(result.stderr, encoding="utf-8")
         gate = subprocess.run(
@@ -88,6 +94,7 @@ def main() -> int:
         if result.returncode != 0:
             state = load_state(mission)
             state["status"] = "active"
+            state["iteration"] = max(int(state.get("iteration", 0)), run_no)
             state.setdefault("blockers", []).append(f"iteration {run_no}: agent command exit {result.returncode}; see runs/iteration-{run_no}.*")
             state["next_action"] = "Retry the bounded command with the next ledger action; do not claim completion from the failed attempt."
             save_state(mission, state)

@@ -5,7 +5,7 @@ description: Use when the user explicitly asks for long-mission/long-task execut
 
 # Long Mission
 
-Protocol version: **1.0.6**.
+Protocol version: **1.0.7**.
 
 This skill turns a long task into a durable mission with an explicit contract, append-only progress ledger, independent acceptance gate, stall detector, and resumable continuation prompt. It is a control loop, not a promise that the host process will run after it exits.
 
@@ -86,6 +86,8 @@ describe it as background execution.
 A failed model/tool iteration is recorded and retried by the supervisor; it is not
 itself permission to stop. Only an explicit human boundary (pause/block), a passed
 independent gate, or exhaustion of the declared budget can end the supervised loop.
+Each bounded command also has a finite timeout (default 900 seconds); a timeout is
+recorded as a failed iteration and the supervisor resumes from the ledger.
 
 Completion also requires a bilingual `MISSION-REPORT.md` (English first, Chinese
 second) containing the objective, acceptance contract, execution log, evidence,
