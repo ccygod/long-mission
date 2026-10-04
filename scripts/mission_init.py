@@ -81,6 +81,7 @@ def main() -> int:
         "no_progress_count": 0,
         "last_progress_at": now(),
         "next_action": "Inspect the mission contract, then complete one bounded action.",
+        "runner": {"required": False, "status": "not_started", "pid": None},
         "blockers": [],
         "evidence": [],
         "created_at": now(),

@@ -15,6 +15,7 @@ from common import load_state, save_state
 def main() -> int:
     parser = argparse.ArgumentParser(description="Close a long-mission after its gate passes.")
     parser.add_argument("mission_dir", type=Path)
+    parser.add_argument("--runner-finalizing", action="store_true", help="internal supervisor close path")
     args = parser.parse_args()
     mission = args.mission_dir.expanduser().resolve()
     state = load_state(mission)
@@ -23,7 +24,10 @@ def main() -> int:
         return 2
 
     gate = Path(__file__).with_name("acceptance_gate.py")
-    result = subprocess.run([sys.executable, str(gate), str(mission)], text=True)
+    gate_args = [sys.executable, str(gate), str(mission)]
+    if args.runner_finalizing:
+        gate_args.append("--runner-finalizing")
+    result = subprocess.run(gate_args, text=True)
     if result.returncode != 0:
         print("mission remains incomplete: acceptance gate failed", file=sys.stderr)
         return result.returncode

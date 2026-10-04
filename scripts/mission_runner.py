@@ -39,7 +39,10 @@ def main() -> int:
                 print("COMPLETE: recorded completion receipt and independent gate passed")
                 return 0
             print("INCOMPLETE: stale complete status without a valid completion receipt", file=sys.stderr)
+            state = load_state(mission); state.setdefault("runner", {})["status"] = "failed"; save_state(mission, state)
             return 1
+        state.setdefault("runner", {})["status"] = "running"
+        save_state(mission, state)
         prompt = (
             f"Continue mission {state.get('mission_id')}. Objective: {state.get('objective')}. "
             f"Next action: {state.get('next_action')}. Read the mission ledger and do not claim completion without the gate."
@@ -62,7 +65,7 @@ def main() -> int:
         (log_dir / f"iteration-{run_no}.stdout").write_text(result.stdout, encoding="utf-8")
         (log_dir / f"iteration-{run_no}.stderr").write_text(result.stderr, encoding="utf-8")
         gate = subprocess.run(
-            ["python3", str(Path(__file__).with_name("acceptance_gate.py")), str(mission)],
+            ["python3", str(Path(__file__).with_name("acceptance_gate.py")), str(mission), "--runner-finalizing"],
             text=True,
             capture_output=True,
         )
@@ -71,22 +74,26 @@ def main() -> int:
             state["iteration"] = max(int(state.get("iteration", 0)), run_no)
             save_state(mission, state)
             close = subprocess.run(
-                ["python3", str(Path(__file__).with_name("mission_close.py")), str(mission)],
+                ["python3", str(Path(__file__).with_name("mission_close.py")), str(mission), "--runner-finalizing"],
                 text=True,
                 capture_output=True,
             )
             if close.returncode == 0:
                 print(close.stdout.strip())
+                state = load_state(mission); state.setdefault("runner", {})["status"] = "complete"; save_state(mission, state)
                 return 0
             print("INCOMPLETE: gate passed but mission_close failed", file=sys.stderr)
+            state = load_state(mission); state.setdefault("runner", {})["status"] = "failed"; save_state(mission, state)
             return 1
         if result.returncode != 0:
             state = load_state(mission)
-            state["status"] = "failed"
-            state.setdefault("blockers", []).append(f"agent command exit {result.returncode}; see runs/iteration-{run_no}.*")
+            state["status"] = "active"
+            state.setdefault("blockers", []).append(f"iteration {run_no}: agent command exit {result.returncode}; see runs/iteration-{run_no}.*")
+            state["next_action"] = "Retry the bounded command with the next ledger action; do not claim completion from the failed attempt."
             save_state(mission, state)
-            print("INCOMPLETE: agent command failed; inspect the run log")
-            return 1
+            print("RETRY: agent command failed; recorded evidence and continuing the supervised loop")
+            continue
+    state = load_state(mission); state.setdefault("runner", {})["status"] = "budget_exhausted"; save_state(mission, state)
     print("INCOMPLETE: iteration budget exhausted; resume from the mission ledger")
     return 1
 
