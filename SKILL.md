@@ -44,6 +44,27 @@ Stop earlier only after the real-surface visual gate passes; exhaust the budget 
 
 Read `MISSION.md`, `state.json`, and `PROGRESS.md`. Keep the current objective, scope, exclusions, deliverables, acceptance checks, blockers, and next action there—not only in chat context.
 
+### Mandatory user confirmation gate
+
+Before any implementation, file mutation, build, deployment, or external side
+effect, show the user a compact execution contract containing:
+
+- objective and in-scope deliverables;
+- hard acceptance criteria and non-regression constraints;
+- soft implementation preferences that may be changed after evidence;
+- visual/interaction evidence requirements when applicable;
+- iteration, time, and cost limits;
+- external actions or confirmation boundaries.
+
+The mission remains `awaiting user confirmation` until the user explicitly confirms
+or edits this contract. A plan, PRD, prior preference, or “start now” from an older
+turn is not a substitute for confirmation of the current contract. If the user edits
+the objective or acceptance, update the mission ledger before executing. The
+independent gate must reject a mission whose `user_confirmation` is `pending`.
+Read-only discovery and contract drafting are allowed before confirmation; execution
+is not. This gate is especially important for multi-variant comparisons: every
+candidate, URL, screenshot, and selection rule must be visible before work begins.
+
 ## PRD execution mode
 
 When the mission is executing a PRD, do not treat every sentence in the PRD as the same kind of requirement. Before implementation, create a PRD interpretation with four buckets:

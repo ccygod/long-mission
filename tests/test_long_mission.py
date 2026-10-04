@@ -220,6 +220,7 @@ def test_readiness_gate_collects_contract_non_interactively(tmp_path):
         "publish requires confirmation",
         "--limits",
         "10 iterations",
+        "--confirmed",
     )
     assert result.returncode == 0, result.stderr
     contract = (mission / "MISSION.md").read_text(encoding="utf-8")

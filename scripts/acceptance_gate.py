@@ -16,6 +16,8 @@ def main() -> int:
     mission = args.mission_dir.expanduser().resolve()
     state = load_state(mission)
     problems: list[str] = []
+    if state.get("user_confirmation") == "pending":
+        problems.append("user confirmation is pending: review the mission contract before execution")
     if state.get("status") in {"blocked", "paused", "failed"}:
         problems.append(f"status={state['status']}")
     if state.get("status") == "complete" and not isinstance(state.get("completion_receipt"), dict):

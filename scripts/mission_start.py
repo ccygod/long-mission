@@ -10,7 +10,10 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+import json
 from pathlib import Path
+
+from common import load_state, save_state
 
 
 def ask(label: str, default: str = "") -> str:
@@ -28,6 +31,7 @@ def main() -> int:
     parser.add_argument("--scope")
     parser.add_argument("--risk")
     parser.add_argument("--limits")
+    parser.add_argument("--confirmed", action="store_true", help="confirm the displayed mission contract in non-interactive mode")
     parser.add_argument("--profile", choices=["standard", "visual_ui", "reference_ui", "capability_sensitive"], default="standard")
     parser.add_argument("--non-interactive", action="store_true")
     args = parser.parse_args()
@@ -56,6 +60,13 @@ def main() -> int:
     result = subprocess.run(init, text=True)
     if result.returncode != 0:
         return result.returncode
+    state = load_state(mission)
+    state["user_confirmation"] = "confirmed" if (args.confirmed or interactive and ask("Confirm this objective, deliverables, acceptance, and stop limits? Type yes to begin", "no").lower() in {"yes", "y"}) else "pending"
+    save_state(mission, state)
+    if state["user_confirmation"] != "confirmed":
+        print("AWAITING USER CONFIRMATION")
+        print("等待用户确认目标、验收标准和停止上限")
+        return 2
     contract = mission / "MISSION.md"
     with contract.open("a", encoding="utf-8") as handle:
         handle.write(
