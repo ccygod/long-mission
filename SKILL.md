@@ -5,7 +5,7 @@ description: Use when the user explicitly asks for long-mission/long-task execut
 
 # Long Mission
 
-Protocol version: **1.0.5**.
+Protocol version: **1.0.6**.
 
 This skill turns a long task into a durable mission with an explicit contract, append-only progress ledger, independent acceptance gate, stall detector, and resumable continuation prompt. It is a control loop, not a promise that the host process will run after it exits.
 
