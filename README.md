@@ -1,6 +1,6 @@
 # Long Mission
 
-> Version 1.0.10 — adds explicit user confirmation receipts, adaptive visual stopping, bilingual progress feedback, and failure-research evidence.
+> Version 1.0.11 — adds explicit user confirmation receipts, adaptive visual stopping, bilingual progress feedback, and failure-research evidence.
 
 <div align="center">
 
@@ -22,6 +22,8 @@ Outcome-driven mission control for complex tasks, PRD execution, UI work, migrat
 </div>
 
 **Chinese documentation:** [README-中文.md](README-中文.md)
+
+**Release history:** [CHANGELOG.md](CHANGELOG.md) · [中文更新日志](CHANGELOG-中文.md)
 
 ## The problem
 
@@ -242,7 +244,7 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 
 Long Mission is informed by practical work with Codex, Superpowers-style engineering workflows, spec-driven planning, persistent planning files, and long-running agent harnesses. It borrows ideas; it is not a copy of any one upstream project.
 
-## 1.0.10 highlights
+## 1.0.11 highlights
 
 - **Visual/UI mission mode:** use `--profile visual_ui` for layout, spacing, topology, arrows, overlap, loading, and interaction work.
 - **Real-surface proof:** Computer Use is preferred; a settled real-browser screenshot is the explicit fallback. Unit tests, DOM snapshots, or a stale tab cannot close a visual mission.

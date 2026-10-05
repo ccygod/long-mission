@@ -1,8 +1,10 @@
 # Long Mission 中文说明
 
-> 版本 1.0.10：增加用户确认回执、自适应视觉循环、全任务过程反馈，以及失败后的 WebSearch 证据门。
+> 版本 1.0.11：增加用户确认回执、自适应视觉循环、全任务过程反馈，以及失败后的 WebSearch 证据门。
 
 > English version: [README.md](README.md)
+
+> 更新记录：[CHANGELOG-中文.md](CHANGELOG-中文.md) · [English Changelog](CHANGELOG.md)
 
 **让 Agent 能持续完成复杂任务，同时保留探索和换路线的自由。**
 
@@ -161,7 +163,7 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 
 Long Mission 能约束流程和完成声明，但不能让宿主进程在回合结束后无限运行。需要持续执行时，应使用 continuation prompt 或受限的 `mission_runner.py`。
 
-## 1.0.10 更新
+## 1.0.11 更新
 
 - **视觉/UI 专项模式：**涉及布局、间距、拓扑、箭头、遮挡、加载状态或交互显示时，使用 `--profile visual_ui`。
 - **真实用户界面验收：**优先使用 Computer Use；不可用时才使用已经稳定加载的真实浏览器截图。单元测试、DOM 快照或旧页面截图不能单独通过视觉验收。
