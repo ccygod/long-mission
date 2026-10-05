@@ -28,6 +28,8 @@ Outcome-driven mission control for complex tasks, PRD execution, UI work, migrat
 
 **Community and launch:** [CONTRIBUTING.md](CONTRIBUTING.md) · [Launch Kit](docs/launch-kit.md) · [Discussions](https://github.com/ccygod/long-mission/discussions)
 
+**Release automation:** each published Release can generate a promotion pack and publish one GitHub Discussion announcement through [release-promotion.yml](.github/workflows/release-promotion.yml). Add an `OPENAI_API_KEY` Actions secret to enable optional AI rewriting; without it, the workflow uses deterministic, non-spammy templates.
+
 ## The problem
 
 Long AI-agent tasks usually fail in one of two ways:

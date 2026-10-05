@@ -8,6 +8,8 @@
 
 > 社区与宣传：[贡献指南](CONTRIBUTING.md) · [发布素材](docs/launch-kit.md) · [GitHub Discussions](https://github.com/ccygod/long-mission/discussions)
 
+> 发布自动化：每次发布 Release 后，工作流会自动生成多平台宣传素材，并在 GitHub Discussions 发布一条版本公告。配置 Actions Secret `OPENAI_API_KEY` 后启用可选的 AI 改写；没有密钥时使用稳定的模板文案，不会阻塞发布。
+
 **让 Agent 能持续完成复杂任务，同时保留探索和换路线的自由。**
 
 Long Mission 是一个面向 AI Agent 的长任务控制协议，适用于 PRD 执行、复杂开发、UI 重构、迁移、调试和多阶段交付。

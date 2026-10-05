@@ -1,0 +1,45 @@
+name: Release promotion pack
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to promote
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  discussions: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate promotion copy
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          URL="https://github.com/${{ github.repository }}/releases/tag/$TAG"
+          mkdir -p promotion
+          python3 scripts/generate_promo.py --tag "$TAG" --url "$URL" --body-file CHANGELOG.md --output "promotion/$TAG.md"
+      - name: Upload promotion pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-promotion-pack
+          path: promotion/
+      - name: Publish GitHub Discussion announcement
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          python3 scripts/publish_release_discussion.py \
+            --owner "${{ github.repository_owner }}" \
+            --repo "${{ github.event.repository.name }}" \
+            --title "Long Mission $TAG — release announcement" \
+            --body-file "promotion/$TAG.md"

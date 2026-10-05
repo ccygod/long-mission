@@ -2,6 +2,10 @@
 
 This page contains reusable, non-spam launch copy for Long Mission.
 
+## Automated release promotion
+
+The repository workflow `.github/workflows/release-promotion.yml` runs when a Release is published or manually dispatched. It creates a downloadable promotion pack and one GitHub Discussions announcement. It uses deterministic templates by default; an `OPENAI_API_KEY` Actions secret and optional `OPENAI_MODEL` repository variable enable AI rewriting. The workflow uses the repository-scoped `GITHUB_TOKEN` and does not post to external social accounts automatically.
+
 ## One-sentence description
 
 Long Mission is an outcome-driven control protocol for long-running AI-agent work: explicit contracts, independent verification, safe replanning, and evidence-backed completion receipts.
