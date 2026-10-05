@@ -15,6 +15,7 @@ Outcome-driven mission control for complex tasks, PRD execution, UI work, migrat
 [![Tests](https://github.com/ccygod/long-mission/actions/workflows/tests.yml/badge.svg)](https://github.com/ccygod/long-mission/actions/workflows/tests.yml)
 
 <a href="#quick-start">Quick start</a> ·
+<a href="#try-it-in-3-minutes">Try it in 3 minutes</a> ·
 <a href="#how-it-works">How it works</a> ·
 <a href="#why-not-just-another-plan">Why it is different</a> ·
 <a href="#中文说明">中文说明</a>
@@ -24,6 +25,8 @@ Outcome-driven mission control for complex tasks, PRD execution, UI work, migrat
 **Chinese documentation:** [README-中文.md](README-中文.md)
 
 **Release history:** [CHANGELOG.md](CHANGELOG.md) · [中文更新日志](CHANGELOG-中文.md)
+
+**Community and launch:** [CONTRIBUTING.md](CONTRIBUTING.md) · [Launch Kit](docs/launch-kit.md) · [Discussions](https://github.com/ccygod/long-mission/discussions)
 
 ## The problem
 
@@ -35,6 +38,45 @@ Long AI-agent tasks usually fail in one of two ways:
 Long Mission is designed for the narrow space between those failures:
 
 > **Lock the outcome. Keep the route open. Require evidence before completion.**
+
+### Try it in 3 minutes
+
+```bash
+git clone https://github.com/ccygod/long-mission.git
+cd long-mission
+python3 scripts/mission_start.py .long-mission/demo \
+  --non-interactive \
+  --objective "Run a small verified task" \
+  --deliverable "demo-output.txt" \
+  --acceptance "the output exists and the check passes" \
+  --limits "3 iterations"
+```
+
+The command intentionally stops at the confirmation gate. Review the generated
+contract, then confirm it explicitly:
+
+```bash
+python3 scripts/mission_confirm.py .long-mission/demo --phrase "确认执行"
+```
+
+This is the central idea: the agent can propose and retry, but it cannot silently
+turn an unverified attempt into a completed mission.
+
+### Who this is for
+
+- Agent and coding-tool maintainers who need durable continuation across turns;
+- teams building PRD, migration, debugging, or UI workflows with real evidence;
+- researchers comparing autonomous loops, plans, and verification strategies.
+
+### What to look at first
+
+| If you want to… | Start here |
+| --- | --- |
+| Understand the protocol | [SKILL.md](SKILL.md) |
+| Run a mission | [Quick start](#quick-start) |
+| Implement a visual/reference task | `--profile visual_ui` and `reference-contract.json` |
+| Understand releases | [CHANGELOG.md](CHANGELOG.md) |
+| Contribute an adapter or test | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ## What Long Mission is
 
