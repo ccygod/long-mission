@@ -1,6 +1,6 @@
 # Long Mission 中文说明
 
-> 版本 1.0.2：增加视觉/UI 专项任务模式、真实页面截图验收和默认十次尝试上限。
+> 版本 1.0.10：增加用户确认回执、自适应视觉循环、全任务过程反馈，以及失败后的 WebSearch 证据门。
 
 > English version: [README.md](README.md)
 
@@ -123,6 +123,12 @@ python3 scripts/mission_start.py .long-mission/my-task \
   --acceptance "测试通过"
 ```
 
+非交互启动会先停在“等待用户确认”。用户明确确认任务契约后，再执行：
+
+```bash
+python3 scripts/mission_confirm.py .long-mission/my-task --phrase "确认执行"
+```
+
 如果是 PRD：
 
 ```bash
@@ -155,12 +161,15 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 
 Long Mission 能约束流程和完成声明，但不能让宿主进程在回合结束后无限运行。需要持续执行时，应使用 continuation prompt 或受限的 `mission_runner.py`。
 
-## 1.0.2 更新
+## 1.0.10 更新
 
 - **视觉/UI 专项模式：**涉及布局、间距、拓扑、箭头、遮挡、加载状态或交互显示时，使用 `--profile visual_ui`。
 - **真实用户界面验收：**优先使用 Computer Use；不可用时才使用已经稳定加载的真实浏览器截图。单元测试、DOM 快照或旧页面截图不能单独通过视觉验收。
-- **十次上限：**任务和视觉循环默认最多 10 次。可以通过 `--max-iterations` 显式覆盖任务总迭代数；视觉尝试仍由任务适配器单独限制。
+- **自适应视觉循环：**不再用固定十次作为完成标准；通过即提前结束，连续无改善时重规划或阻塞，安全上限只用于防止无限循环。
 - **独立视觉门：**每次尝试必须记录验证方式、异步稳定状态、代表性交互、截图证据及通过/失败结果。
+- **全任务过程反馈：**每轮都记录结果、证据、下一步和双语过程反馈到 `feedback.jsonl`、`events.jsonl` 和 `PROGRESS.md`。
+- **失败研究门：**非简单或重复失败后，必须搜索官方文档/最佳实践并记录来源和应用结论后再重试。
+- **用户确认回执：**不能通过 `--confirmed` 或直接修改 `state.json` 绕过确认门。
 
 ## 1.0.1 更新
 

@@ -17,8 +17,8 @@ def main() -> int:
     mission = args.mission_dir.expanduser().resolve()
     state = load_state(mission)
     problems: list[str] = []
-    if state.get("user_confirmation") == "pending":
-        problems.append("user confirmation is pending: review the mission contract before execution")
+    if state.get("user_confirmation") != "confirmed" or not isinstance(state.get("confirmation_receipt"), dict):
+        problems.append("explicit user confirmation receipt is missing: review and confirm the mission contract before execution")
     runner = state.get("runner", {})
     if not args.runner_finalizing and isinstance(runner, dict) and runner.get("required") and runner.get("status") not in {"complete"}:
         problems.append(f"supervisor runner not complete: {runner.get('status', 'unknown')}")
@@ -55,6 +55,9 @@ def main() -> int:
         problems.append("unverified deliverables: " + ", ".join(missing_verified))
     if state.get("open_questions"):
         problems.append("open questions: " + "; ".join(map(str, state["open_questions"])))
+    failure_research = state.get("failure_research") or {}
+    if failure_research.get("required") and not state.get("research_evidence"):
+        problems.append("failure research required: consult WebSearch/official best practices and record source evidence before retry or completion")
 
     def check_command(name: str, command: Any, cwd: Path = mission) -> None:
         if not isinstance(command, list) or not command or not all(isinstance(item, str) and item for item in command):

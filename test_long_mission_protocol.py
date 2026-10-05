@@ -44,7 +44,8 @@ class LongMissionProtocolTests(unittest.TestCase):
             state = json.loads((mission / "state.json").read_text())
             self.assertEqual(state["acceptance_profile"], "visual_ui")
             self.assertEqual(state["max_iterations"], 10)
-            self.assertEqual(state["visual_loop"]["max_attempts"], 10)
+            self.assertIsNone(state["visual_loop"]["max_attempts"])
+            self.assertEqual(state["visual_loop"]["safety_cap"], 20)
             self.assertTrue(state["visual_loop"]["enabled"])
 
     def test_visual_gate_requires_real_evidence_and_accepts_computer_use_pass(self):
@@ -127,6 +128,8 @@ class LongMissionProtocolTests(unittest.TestCase):
             state = json.loads(state_path.read_text())
             state["verified_outputs"] = ["MISSION.md"]
             state["open_questions"] = []
+            state["user_confirmation"] = "confirmed"
+            state["confirmation_receipt"] = {"source": "test"}
             state_path.write_text(json.dumps(state))
 
             failed = run_script("mission_close.py", str(mission), check=False)
@@ -173,6 +176,7 @@ class LongMissionProtocolTests(unittest.TestCase):
             state_path = mission / "state.json"
             state = json.loads(state_path.read_text())
             state["user_confirmation"] = "confirmed"
+            state["confirmation_receipt"] = {"source": "test"}
             state["runner"] = {"required": True, "status": "running", "pid": 1}
             state["deliverables"] = []
             state["verified_outputs"] = []
@@ -192,6 +196,7 @@ class LongMissionProtocolTests(unittest.TestCase):
             state_path = mission / "state.json"
             state = json.loads(state_path.read_text())
             state["user_confirmation"] = "confirmed"
+            state["confirmation_receipt"] = {"source": "test"}
             state_path.write_text(json.dumps(state))
             result = run_script("mission_runner.py", str(mission), "--command", "sh -c 'exit 7' {prompt}", check=False)
             self.assertNotEqual(result.returncode, 0)

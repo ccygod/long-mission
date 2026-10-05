@@ -65,7 +65,10 @@ def main() -> int:
         "verification_gates": verification_gates,
         "visual_loop": {
             "enabled": args.profile == "visual_ui",
-            "max_attempts": 10,
+            "max_attempts": None,
+            "safety_cap": 20,
+            "max_no_improvement": 2,
+            "stop_policy": "pass_or_replan_or_block_or_safety_cap",
             "attempts": [],
             "required_evidence": ["real_user_surface_screenshot", "settled_state", "representative_interaction"],
             "status": "pending" if args.profile == "visual_ui" else "not_applicable",
@@ -84,6 +87,8 @@ def main() -> int:
         "runner": {"required": False, "status": "not_started", "pid": None},
         "blockers": [],
         "evidence": [],
+        "research_evidence": [],
+        "failure_research": {"required": False, "reason": None, "last_attempt": None},
         "created_at": now(),
         "updated_at": now(),
     }
@@ -121,6 +126,8 @@ def main() -> int:
             encoding="utf-8",
         )
     (mission / "events.jsonl").write_text("", encoding="utf-8")
+    (mission / "feedback.jsonl").write_text("", encoding="utf-8")
+    (mission / "research.jsonl").write_text("", encoding="utf-8")
     if args.profile != "standard":
         (mission / "reference-contract.json").write_text(json.dumps({"schema": "long-mission.reference-contract.v1", "source": None, "required_structure": [], "required_relationships": [], "interaction": [], "responsive_viewports": [], "allowed_deviation": {}, "critical_requirements": [], "degradable_requirements": []}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         (mission / "capability-probe.json").write_text(json.dumps({"schema": "long-mission.capability-probe.v1", "status": "pending", "tested_capabilities": [], "attempts": [], "bottleneck": None, "fallbacks": []}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -1,6 +1,6 @@
 # Long Mission
 
-> Version 1.0.2 — adds a visual/UI mission mode with real-surface screenshot gates and a default ten-attempt cap.
+> Version 1.0.10 — adds explicit user confirmation receipts, adaptive visual stopping, bilingual progress feedback, and failure-research evidence.
 
 <div align="center">
 
@@ -47,6 +47,11 @@ Long Mission is a small, runtime-agnostic control protocol for durable agent wor
 - a bilingual final mission report;
 - a completion receipt that cannot be granted by an ordinary “done” message;
 - continuation and bounded runner support after context compaction or turn boundaries.
+- an explicit user-confirmation receipt that cannot be replaced by editing `state.json`;
+- adaptive visual stopping instead of a fixed ten-attempt rule;
+- per-iteration bilingual feedback for every mission type, not only visual work;
+- targeted WebSearch/official-source evidence after non-trivial failures before retry;
+- `blocked_engine` and replan states for capability ceilings and repeated no-improvement attempts.
 
 It is a control loop, not a promise that the host process will remain alive after a turn ends.
 
@@ -184,6 +189,12 @@ python3 scripts/mission_start.py .long-mission/my-task \
   --limits "20 iterations"
 ```
 
+`--non-interactive` leaves the mission awaiting confirmation. After the user explicitly confirms the displayed contract, record it with:
+
+```bash
+python3 scripts/mission_confirm.py .long-mission/my-task --phrase "确认执行"
+```
+
 For a PRD:
 
 ```bash
@@ -231,12 +242,14 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 
 Long Mission is informed by practical work with Codex, Superpowers-style engineering workflows, spec-driven planning, persistent planning files, and long-running agent harnesses. It borrows ideas; it is not a copy of any one upstream project.
 
-## 1.0.2 highlights
+## 1.0.10 highlights
 
 - **Visual/UI mission mode:** use `--profile visual_ui` for layout, spacing, topology, arrows, overlap, loading, and interaction work.
 - **Real-surface proof:** Computer Use is preferred; a settled real-browser screenshot is the explicit fallback. Unit tests, DOM snapshots, or a stale tab cannot close a visual mission.
-- **Ten-attempt cap:** the mission and visual loop default to 10 attempts. Override the mission budget explicitly with `--max-iterations`; visual attempts remain capped by the mission adapter.
+- **Adaptive visual loop:** no arbitrary ten-attempt completion rule; pass early, replan after consecutive no-improvement attempts, and retain a configurable safety cap.
 - **Independent visual gate:** every attempt records verifier, settled state, representative interaction, screenshot evidence, and pass/fail status.
+- **Universal iteration feedback:** every supervised iteration records result, evidence, next action, and bilingual progress feedback in `feedback.jsonl`, `events.jsonl`, and `PROGRESS.md`.
+- **Failure research gate:** non-trivial or repeated failures require targeted WebSearch/official-source research and recorded URLs before retry or completion.
 
 ## 1.0.1 highlights
 

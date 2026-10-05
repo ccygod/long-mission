@@ -60,6 +60,8 @@ def test_gate_accepts_only_explicit_verified_state(tmp_path):
     state["verified_outputs"] = ["README.md"]
     state["open_questions"] = []
     state["acceptance_checks"] = [{"name": "smoke", "command": [sys.executable, "-c", "print('ok')"]}]
+    state["user_confirmation"] = "confirmed"
+    state["confirmation_receipt"] = {"source": "test"}
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2))
     add_report(mission)
     result = run("acceptance_gate.py", mission)
@@ -99,6 +101,8 @@ def test_gate_runs_declared_verification_gate_and_checks_evidence(tmp_path):
         "checks": [{"name": "parity", "command": [sys.executable, "-c", "print('match')"]}],
         "evidence": ["evidence.txt"],
     }]
+    state["user_confirmation"] = "confirmed"
+    state["confirmation_receipt"] = {"source": "test"}
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2))
     add_report(mission)
     result = run("acceptance_gate.py", mission)
@@ -119,6 +123,8 @@ def test_gate_allows_gate_evidence_without_verified_outputs(tmp_path):
         "checks": [{"name": "smoke", "command": [sys.executable, "-c", "print('ok')"]}],
         "evidence": ["evidence.txt"],
     }]
+    state["user_confirmation"] = "confirmed"
+    state["confirmation_receipt"] = {"source": "test"}
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2))
     add_report(mission)
     result = run("acceptance_gate.py", mission)
@@ -149,6 +155,8 @@ def test_gate_accepts_omitted_conditional_gates(tmp_path):
     state["deliverables"] = [str(deliverable)]
     state["verified_outputs"] = [str(deliverable)]
     state["open_questions"] = []
+    state["user_confirmation"] = "confirmed"
+    state["confirmation_receipt"] = {"source": "test"}
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2))
     add_report(mission)
     result = run("acceptance_gate.py", mission)
@@ -220,9 +228,10 @@ def test_readiness_gate_collects_contract_non_interactively(tmp_path):
         "publish requires confirmation",
         "--limits",
         "10 iterations",
-        "--confirmed",
     )
-    assert result.returncode == 0, result.stderr
+    assert result.returncode == 2
+    confirmed = run("mission_confirm.py", mission, "--phrase", "确认执行")
+    assert confirmed.returncode == 0, confirmed.stderr
     contract = (mission / "MISSION.md").read_text(encoding="utf-8")
     assert "publish requires confirmation" in contract
     assert "10 iterations" in contract

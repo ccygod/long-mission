@@ -40,6 +40,19 @@ def main() -> int:
             print(f"STALL: capability probe has {args.max_no_improvement} consecutive attempts without improvement")
             print("状态：能力探测停滞")
             return 1
+    state_loop = state.get("visual_loop", {})
+    if isinstance(state_loop, dict) and state_loop.get("enabled"):
+        attempts = state_loop.get("attempts", [])
+        limit = int(state_loop.get("max_no_improvement", args.max_no_improvement))
+        tail = []
+        for attempt in reversed(attempts if isinstance(attempts, list) else []):
+            if not isinstance(attempt, dict) or "improved" not in attempt:
+                break
+            tail.append(bool(attempt.get("improved")))
+        if len(tail) >= limit and not any(tail[:limit]):
+            print(f"STALL: visual loop has {limit} consecutive attempts without improvement; replan required")
+            print("状态：视觉循环连续无改善，必须重规划")
+            return 1
     print(f"OK: no_progress_count={count}")
     print("状态：正常")
     return 0

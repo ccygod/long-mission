@@ -27,7 +27,7 @@ For automation or when the contract is already explicit, pass the fields as flag
 
 The five question classes are: desired outcome, required artifacts, observable done checks, exclusions/confirmation boundaries, and time/iteration/cost limits. This is an alignment gate, not a request to approve every implementation detail.
 
-When the task explicitly concerns UI, layout, visual polish, visual regressions, topology/flow diagrams, spacing, arrows, overlap, or “make it look like this”, initialize the mission with `--profile visual_ui`. This activates the visual/UI loop, a real-user-surface gate, artifact/runtime parity, and a ten-attempt cap. When the task includes a reference image, screenshot, or mockup, also record its structure, relationships, interactions, responsive states, and allowed deviations in the mission adapter. Use `reference_ui` for non-UI reference-driven work that still needs the older capability contract.
+When the task explicitly concerns UI, layout, visual polish, visual regressions, topology/flow diagrams, spacing, arrows, overlap, or “make it look like this”, initialize the mission with `--profile visual_ui`. This activates the visual/UI loop, a real-user-surface gate, artifact/runtime parity, adaptive visual stopping, and per-iteration feedback. When the task includes a reference image, screenshot, or mockup, also record its structure, relationships, interactions, responsive states, and allowed deviations in the mission adapter. Use `reference_ui` for non-UI reference-driven work that still needs the older capability contract.
 
 The readiness gate then creates a mission before substantial work:
 
@@ -37,10 +37,12 @@ python3 ~/.agents/skills/long-mission/scripts/mission_init.py \
   --deliverable path/to/output --acceptance "tests pass"
 ```
 
-For a visual/UI mission, use `--profile visual_ui`. The default mission and visual
-attempt budget is **10**. This is a maximum, not a requirement to make ten edits.
-Stop earlier only after the real-surface visual gate passes; exhaust the budget as
-`incomplete` or `blocked`, never as success.
+For a visual/UI mission, use `--profile visual_ui`. Do not use an arbitrary ten-edit
+completion rule. The default is an adaptive loop with a safety cap of 20 attempts,
+an early pass when the real-surface gate succeeds, and a replan/block decision after
+two consecutive attempts without measurable improvement. The safety cap contains an
+infinite loop; it is not a required number of edits and never converts failure into
+success.
 
 Read `MISSION.md`, `state.json`, and `PROGRESS.md`. Keep the current objective, scope, exclusions, deliverables, acceptance checks, blockers, and next action there—not only in chat context.
 
@@ -64,6 +66,18 @@ independent gate must reject a mission whose `user_confirmation` is `pending`.
 Read-only discovery and contract drafting are allowed before confirmation; execution
 is not. This gate is especially important for multi-variant comparisons: every
 candidate, URL, screenshot, and selection rule must be visible before work begins.
+
+`--non-interactive --confirmed` is intentionally unsupported. A model must not
+self-confirm its own contract or edit `state.json` directly to bypass the gate.
+After the contract is shown, an explicit user message such as “确认执行” must be
+recorded through:
+
+```bash
+python3 scripts/mission_confirm.py .long-mission/<slug> --phrase "确认执行"
+```
+
+Launch and completion checks require the resulting confirmation receipt, not merely
+the string `user_confirmation=confirmed`.
 
 ### Script-owned continuation
 
@@ -165,6 +179,19 @@ Use `plan.status = hypothesis|selected|superseded` and increment `plan.version`.
 5. If it fails, diagnose the listed gap and continue. Never convert a failing gate into “done”.
 6. Run `stall_detector.py`; after repeated no-progress iterations, change strategy or record a real blocker.
 
+### Universal iteration feedback
+
+This feedback rule applies to **every** supervised mission, not only `visual_ui`:
+
+- After every bounded iteration, record the result, evidence, failure state, and next action before starting another iteration.
+- If the iteration did not pass, emit a concise progress update immediately; do not wait until the whole mission ends.
+- Feedback is a side channel and must not block the next safe iteration. The runner writes bilingual `feedback.jsonl`, appends `PROGRESS.md`, and emits an `ITERATION_FEEDBACK` line to stdout.
+- In an interactive host, the main Agent should surface that line as commentary. In a detached runner, the JSONL and stdout are the inspectable real-time record; the runner must continue without waiting for a user reply unless a confirmation boundary, blocker, or material decision is reached.
+- Each feedback item must answer: what was attempted, what actually happened, whether it improved, what remains, and what the next falsifiable action is.
+- After a non-trivial failure, unfamiliar error, repeated failure, engine limitation, or failed acceptance gate, the next attempt must first use WebSearch for the exact error, official documentation, or relevant best practices. A clearly deterministic one-line typo or syntax correction may be fixed locally first, but a second failure triggers research before another retry.
+- Record consulted URLs and the applied conclusion with `mission_log.py --research-source ... --research-summary ...` (also written to `research.jsonl`). A mission with required failure research and no source evidence cannot pass the completion gate.
+- Web research should be targeted and source-aware: prefer official documentation and primary sources, do not search as a ritual, and do not replace the real reproduction or local evidence with a generic article.
+
 ### Visual/UI specialist loop
 
 When `visual_ui` is active, every material UI change must be followed by a fresh
@@ -178,17 +205,20 @@ real-surface check before it can count as progress:
 4. Exercise a representative interaction (for example select the affected prompt,
    open a node/card, scroll the affected region, or resize the viewport).
 5. Capture an inspectable full or affected-surface screenshot and record what changed,
-   what remains wrong, and the next falsifiable action in `visual_loop.attempts`.
+   what remains wrong, the measured improvement, and the next falsifiable action in
+   `visual_loop.attempts`. Every unsuccessful attempt must include concise progress
+   feedback in the ledger and feedback stream before the next attempt begins.
 6. Inspect structure, topology/relationships, alignment, overlap, clipping, arrows,
    loading/empty/error states, interaction results, and user-visible data counts.
 
-The visual gate requires a real screenshot, settled state, and representative
-interaction for each recorded attempt, and at least one passing attempt. A screenshot
+The visual gate requires a real screenshot, settled state, representative interaction,
+and feedback for each recorded attempt, with at least one passing attempt. A screenshot
 from before the final build, a stale tab, or a self-report of “looks fixed” does not
-count. The loop has a default maximum of ten attempts; after ten unsuccessful visual
-iterations, replan or report the capability/implementation blocker instead of silently
-continuing or claiming completion. The visual mode is conditional and adds no cost to
-ordinary non-visual missions.
+count. Two consecutive attempts without measurable improvement require a replan or a
+capability/implementation blocker; the safety cap is only the final containment guard.
+The runner writes a bilingual `feedback.jsonl` record and emits an iteration feedback
+line after every attempt, so progress can be surfaced without pausing the main task.
+The visual mode is conditional and adds no cost to ordinary non-visual missions.
 
 #### Multi-variant visual missions
 

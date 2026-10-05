@@ -30,13 +30,14 @@ def main() -> int:
     if not isinstance(loop, dict) or not loop.get("enabled"):
         problems.append("visual_loop is not enabled")
         loop = {}
-    max_attempts = int(loop.get("max_attempts", 10))
+    max_attempts = loop.get("max_attempts")
+    safety_cap = int(loop.get("safety_cap", 20))
     attempts = loop.get("attempts", [])
     if not isinstance(attempts, list):
         problems.append("visual_loop.attempts must be a list")
         attempts = []
-    if len(attempts) > max_attempts:
-        problems.append(f"visual attempt budget exceeded: {len(attempts)} > {max_attempts}")
+    if len(attempts) > safety_cap:
+        problems.append(f"visual safety cap exceeded: {len(attempts)} > {safety_cap}")
     if not attempts:
         problems.append("no post-change real-surface visual evidence recorded")
     passed = False
@@ -51,6 +52,8 @@ def main() -> int:
             problems.append(f"visual attempt {index} was not recorded after async settling")
         if not attempt.get("interaction"):
             problems.append(f"visual attempt {index} lacks representative interaction evidence")
+        if attempt.get("status") != "pass" and not attempt.get("feedback"):
+            problems.append(f"visual attempt {index} lacks failure/progress feedback")
         evidence = attempt.get("evidence")
         evidence_paths = evidence if isinstance(evidence, list) else [evidence]
         if not evidence_paths or any(not isinstance(item, str) or not item for item in evidence_paths):

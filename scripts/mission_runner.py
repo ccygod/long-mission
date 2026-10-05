@@ -44,9 +44,11 @@ def main() -> int:
             return 1
         state.setdefault("runner", {})["status"] = "running"
         save_state(mission, state)
+        research_hint = " If the previous iteration failed or the acceptance gate failed, first use WebSearch for the exact error, official documentation, and relevant best practices (unless it is a clearly deterministic one-line typo); record the consulted URLs and how they changed the next attempt."
         prompt = (
             f"Continue mission {state.get('mission_id')}. Objective: {state.get('objective')}. "
             f"Next action: {state.get('next_action')}. Read the mission ledger and do not claim completion without the gate."
+            + (research_hint if (state.get("failure_research") or {}).get("required") else "")
         )
         argv = [token.replace("{prompt}", prompt) for token in shlex.split(args.command)]
         run_no = int(state.get("iteration", 0)) + 1
@@ -75,6 +77,17 @@ def main() -> int:
             text=True,
             capture_output=True,
         )
+        state = load_state(mission)
+        raw_feedback = (result.stdout or result.stderr or "iteration completed").strip().splitlines()
+        feedback_text = raw_feedback[-1][-500:] if raw_feedback else "iteration completed"
+        feedback_status = "passed" if gate.returncode == 0 else ("failed" if result.returncode != 0 else "needs_next_iteration")
+        feedback_entry = {"at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(), "iteration": run_no, "status": feedback_status, "feedback": feedback_text, "next_action": state.get("next_action")}
+        with (mission / "feedback.jsonl").open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(feedback_entry, ensure_ascii=False) + "\n")
+        state["last_feedback"] = feedback_entry
+        save_state(mission, state)
+        print(f"ITERATION_FEEDBACK {json.dumps(feedback_entry, ensure_ascii=False)}")
+        print(f"第 {run_no} 轮过程反馈：{feedback_text}")
         if gate.returncode == 0:
             state = load_state(mission)
             state["iteration"] = max(int(state.get("iteration", 0)), run_no)
@@ -94,12 +107,17 @@ def main() -> int:
         if result.returncode != 0:
             state = load_state(mission)
             state["status"] = "active"
+            state["failure_research"] = {"required": True, "reason": f"iteration {run_no} command exit {result.returncode}", "last_attempt": run_no}
             state["iteration"] = max(int(state.get("iteration", 0)), run_no)
             state.setdefault("blockers", []).append(f"iteration {run_no}: agent command exit {result.returncode}; see runs/iteration-{run_no}.*")
             state["next_action"] = "Retry the bounded command with the next ledger action; do not claim completion from the failed attempt."
             save_state(mission, state)
             print("RETRY: agent command failed; recorded evidence and continuing the supervised loop")
             continue
+        if gate.returncode != 0:
+            state = load_state(mission)
+            state["failure_research"] = {"required": True, "reason": f"iteration {run_no} acceptance gate failed", "last_attempt": run_no}
+            save_state(mission, state)
     state = load_state(mission); state.setdefault("runner", {})["status"] = "budget_exhausted"; save_state(mission, state)
     print("INCOMPLETE: iteration budget exhausted; resume from the mission ledger")
     return 1

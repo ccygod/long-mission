@@ -29,8 +29,8 @@ def main() -> int:
     args = parser.parse_args()
     mission = args.mission_dir.expanduser().resolve()
     state = load_state(mission)
-    if state.get("user_confirmation") == "pending":
-        raise SystemExit("user confirmation is pending; confirm the mission contract before launch")
+    if state.get("user_confirmation") != "confirmed" or not isinstance(state.get("confirmation_receipt"), dict):
+        raise SystemExit("user confirmation receipt is missing; display the mission contract and wait for explicit confirmation before launch")
     log_dir = mission / "runs"
     log_dir.mkdir(exist_ok=True)
     stdout = (log_dir / "supervisor.stdout").open("a", encoding="utf-8")
