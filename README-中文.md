@@ -1,6 +1,6 @@
 # Long Mission 中文说明
 
-> 版本 1.0.11：增加用户确认回执、自适应视觉循环、全任务过程反馈，以及失败后的 WebSearch 证据门。
+> 版本 1.0.12：增加自适应任务迭代预算、停滞后重规划和不会吞掉验收失败码的检查包装器。
 
 > English version: [README.md](README.md)
 
@@ -168,6 +168,13 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 ## 边界
 
 Long Mission 能约束流程和完成声明，但不能让宿主进程在回合结束后无限运行。需要持续执行时，应使用 continuation prompt 或受限的 `mission_runner.py`。
+
+## 1.0.12 更新
+
+- **自适应任务预算：**省略 `--max-iterations` 后，由独立验收门、停滞检测和安全上限共同控制，不再把固定十轮当完成标准。
+- **可配置控制：**初始化时可设置 `--safety-cap` 和 `--max-no-progress`；仍可用 `--max-iterations` 声明硬上限。
+- **状态不丢失的检查：**组合运行验收门和停滞检查时使用 `scripts/mission_check.py`，验收失败会保留失败退出码。
+- **恢复安全的计数：**监督器恢复任务时遵守总预算，不重复计算 runner 已预留的迭代。
 
 ## 1.0.11 更新
 

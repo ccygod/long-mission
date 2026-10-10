@@ -31,7 +31,16 @@
     "visual_loop": {"type": "object"},
     "attempts": {"type": "array"},
     "iteration": {"type": "integer", "minimum": 0},
-    "max_iterations": {"type": "integer", "minimum": 1},
+    "max_iterations": {"type": ["integer", "null"], "minimum": 1},
+    "iteration_policy": {
+      "type": "object",
+      "required": ["mode", "safety_cap", "max_no_progress"],
+      "properties": {
+        "mode": {"enum": ["fixed", "adaptive"]},
+        "safety_cap": {"type": "integer", "minimum": 1},
+        "max_no_progress": {"type": "integer", "minimum": 1}
+      }
+    },
     "no_progress_count": {"type": "integer", "minimum": 0},
     "next_action": {"type": "string", "minLength": 1}
   }

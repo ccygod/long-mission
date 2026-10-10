@@ -1,6 +1,6 @@
 # Long Mission
 
-> Version 1.0.11 — adds explicit user confirmation receipts, adaptive visual stopping, bilingual progress feedback, and failure-research evidence.
+> Version 1.0.12 — adds adaptive mission iteration budgets, stall-triggered replanning, and status-preserving validation.
 
 <div align="center">
 
@@ -289,6 +289,13 @@ python3 -m pytest -q tests test_long_mission_protocol.py
 ## Credits and references
 
 Long Mission is informed by practical work with Codex, Superpowers-style engineering workflows, spec-driven planning, persistent planning files, and long-running agent harnesses. It borrows ideas; it is not a copy of any one upstream project.
+
+## 1.0.12 highlights
+
+- **Adaptive mission budget:** omit `--max-iterations` to let the independent gate finish early, the stall detector require replanning, and the safety cap contain runaway loops.
+- **Configurable controls:** set `--safety-cap` and `--max-no-progress` when initializing a mission; explicit `--max-iterations` remains available for a hard budget.
+- **Status-preserving validation:** use `scripts/mission_check.py` when running acceptance and stall checks together so a failed gate remains a failed exit status.
+- **Resume-safe accounting:** the supervisor respects the total budget across resumes and does not double-count a runner-reserved iteration.
 
 ## 1.0.11 highlights
 

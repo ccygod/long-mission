@@ -37,13 +37,17 @@ class LongMissionProtocolTests(unittest.TestCase):
                 ["real_user_surface", "artifact_parity"],
             )
 
-    def test_visual_profile_enables_ten_attempt_real_surface_loop(self):
+    def test_visual_profile_uses_adaptive_iteration_policy(self):
         with tempfile.TemporaryDirectory() as directory:
             mission = Path(directory) / "visual"
             run_script("mission_init.py", str(mission), "--objective", "visual test", "--profile", "visual_ui")
             state = json.loads((mission / "state.json").read_text())
             self.assertEqual(state["acceptance_profile"], "visual_ui")
-            self.assertEqual(state["max_iterations"], 10)
+            self.assertIsNone(state["max_iterations"])
+            self.assertEqual(
+                state["iteration_policy"],
+                {"mode": "adaptive", "safety_cap": 20, "max_no_progress": 3},
+            )
             self.assertIsNone(state["visual_loop"]["max_attempts"])
             self.assertEqual(state["visual_loop"]["safety_cap"], 20)
             self.assertTrue(state["visual_loop"]["enabled"])

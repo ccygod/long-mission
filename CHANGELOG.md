@@ -4,6 +4,19 @@ All notable changes to Long Mission are documented here.
 
 The format follows the Keep a Changelog convention. Git tags are the immutable version markers; `VERSION` is the machine-readable current version.
 
+## [1.0.12] - 2026-10-10
+
+### Added
+
+- Added an adaptive iteration policy: missions no longer default to a fixed ten-iteration budget.
+- Added configurable safety caps and no-progress thresholds, with explicit replanning when the stall detector fires.
+- Added `scripts/mission_check.py` so a failed acceptance gate cannot be masked by a later successful stall check.
+
+### Changed
+
+- The supervisor now respects the total iteration budget when resuming a mission and avoids double-counting iterations reserved by the runner.
+- Continuation prompts report adaptive budgets and their safety policy.
+
 ## [1.0.11] - 2026-10-05
 
 ### Added

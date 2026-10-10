@@ -20,15 +20,23 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run a bounded, resumable mission loop.")
     parser.add_argument("mission_dir", type=Path)
     parser.add_argument("--command", required=True, help="command template; use {prompt}")
-    parser.add_argument("--max-iterations", type=int, default=None)
+    parser.add_argument("--max-iterations", type=int, default=None, help="explicit total cap; omit for adaptive execution")
     parser.add_argument("--command-timeout", type=int, default=900, help="seconds allowed for one bounded command")
     args = parser.parse_args()
     mission = args.mission_dir.expanduser().resolve()
     state = load_state(mission)
-    limit = args.max_iterations or int(state.get("max_iterations", 10))
+    policy = state.get("iteration_policy") if isinstance(state.get("iteration_policy"), dict) else {}
+    if args.max_iterations is not None:
+        limit = args.max_iterations
+    elif state.get("max_iterations") is not None:
+        limit = int(state["max_iterations"])
+    else:
+        limit = int(policy.get("safety_cap", 20))
+    current_iteration = int(state.get("iteration", 0))
+    remaining = max(0, limit - current_iteration)
     log_dir = mission / "runs"
     log_dir.mkdir(exist_ok=True)
-    for _ in range(limit):
+    for _ in range(remaining):
         state = load_state(mission)
         if state.get("status") == "complete":
             gate = subprocess.run(
@@ -53,6 +61,7 @@ def main() -> int:
         argv = [token.replace("{prompt}", prompt) for token in shlex.split(args.command)]
         run_no = int(state.get("iteration", 0)) + 1
         state["iteration"] = run_no
+        state.setdefault("runner", {})["iteration"] = run_no
         save_state(mission, state)
         guard = subprocess.run(
             ["python3", str(Path(__file__).with_name("guard_command.py")), json.dumps(argv)],
@@ -104,6 +113,29 @@ def main() -> int:
             print("INCOMPLETE: gate passed but mission_close failed", file=sys.stderr)
             state = load_state(mission); state.setdefault("runner", {})["status"] = "failed"; save_state(mission, state)
             return 1
+        stall_limit = int(policy.get("max_no_progress", 3))
+        stall = subprocess.run(
+            [
+                "python3",
+                str(Path(__file__).with_name("stall_detector.py")),
+                str(mission),
+                "--max-no-progress",
+                str(stall_limit),
+            ],
+            text=True,
+            capture_output=True,
+        )
+        if stall.returncode != 0:
+            state = load_state(mission)
+            state["status"] = "active"
+            state.setdefault("runner", {})["status"] = "replan_required"
+            state.setdefault("blockers", []).append(
+                f"stall detector requires replanning after iteration {run_no}; see runs/iteration-{run_no}.*"
+            )
+            state["next_action"] = "Replan the route before another iteration; do not repeat the stalled approach."
+            save_state(mission, state)
+            print("REPLAN_REQUIRED: stall detector found repeated no-progress iterations")
+            return 1
         if result.returncode != 0:
             state = load_state(mission)
             state["status"] = "active"
@@ -116,6 +148,7 @@ def main() -> int:
             continue
         if gate.returncode != 0:
             state = load_state(mission)
+            state["status"] = "active"
             state["failure_research"] = {"required": True, "reason": f"iteration {run_no} acceptance gate failed", "last_attempt": run_no}
             save_state(mission, state)
     state = load_state(mission); state.setdefault("runner", {})["status"] = "budget_exhausted"; save_state(mission, state)

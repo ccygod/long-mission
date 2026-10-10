@@ -27,7 +27,13 @@ def main() -> int:
     args = parser.parse_args()
     mission = args.mission_dir.expanduser().resolve()
     state = load_state(mission)
-    state["iteration"] = int(state.get("iteration", 0)) + 1
+    runner = state.get("runner") if isinstance(state.get("runner"), dict) else {}
+    reserved_iteration = (
+        runner.get("status") == "running"
+        and runner.get("iteration") == state.get("iteration")
+    )
+    if not reserved_iteration:
+        state["iteration"] = int(state.get("iteration", 0)) + 1
     state["no_progress_count"] = int(state.get("no_progress_count", 0)) + (1 if args.no_progress else 0)
     if not args.no_progress:
         state["no_progress_count"] = 0

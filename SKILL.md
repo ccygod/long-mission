@@ -38,11 +38,12 @@ python3 ~/.agents/skills/long-mission/scripts/mission_init.py \
 ```
 
 For a visual/UI mission, use `--profile visual_ui`. Do not use an arbitrary ten-edit
-completion rule. The default is an adaptive loop with a safety cap of 20 attempts,
-an early pass when the real-surface gate succeeds, and a replan/block decision after
-two consecutive attempts without measurable improvement. The safety cap contains an
-infinite loop; it is not a required number of edits and never converts failure into
-success.
+completion rule. Omit `--max-iterations` for the adaptive policy: the independent
+gate can finish early, the stall detector can require replanning after repeated
+no-progress iterations, and a safety cap of 20 is only the last-resort containment
+guard. The safety cap is not a required number of edits and never converts failure
+into success. If the user gives an explicit iteration limit, record it as a hard
+budget and treat exhaustion as incomplete.
 
 Read `MISSION.md`, `state.json`, and `PROGRESS.md`. Keep the current objective, scope, exclusions, deliverables, acceptance checks, blockers, and next action there—not only in chat context.
 
@@ -178,6 +179,14 @@ Use `plan.status = hypothesis|selected|superseded` and increment `plan.version`.
    `python3 .../acceptance_gate.py <mission-dir>`.
 5. If it fails, diagnose the listed gap and continue. Never convert a failing gate into “done”.
 6. Run `stall_detector.py`; after repeated no-progress iterations, change strategy or record a real blocker.
+
+For a one-shot shell check that runs both validators, use the status-preserving
+wrapper instead of joining the commands with `;` (the last command's zero exit
+status would otherwise hide a failed acceptance gate):
+
+```bash
+python3 ~/.agents/skills/long-mission/scripts/mission_check.py .long-mission/<slug>
+```
 
 ### Universal iteration feedback
 
@@ -393,7 +402,7 @@ python3 ~/.agents/skills/long-mission/scripts/stall_detector.py <mission-dir>
 python3 ~/.agents/skills/long-mission/scripts/acceptance_gate.py <mission-dir>
 ```
 
-For a host that can run an outer command loop, `mission_runner.py` accepts a command template containing `{prompt}`. It is bounded by `max_iterations`, stores each stdout/stderr transcript under `runs/`, and delegates completion to the gate. Run `guard_command.py` on proposed argv before allowing a mutating command. This wrapper is an adapter, not a hidden background service and not a bypass of Codex permissions.
+For a host that can run an outer command loop, `mission_runner.py` accepts a command template containing `{prompt}`. It uses an explicit `max_iterations` only when one was declared; otherwise it uses the mission's adaptive policy and safety cap, stores each stdout/stderr transcript under `runs/`, and delegates completion to the gate. Run `guard_command.py` on proposed argv before allowing a mutating command. This wrapper is an adapter, not a hidden background service and not a bypass of Codex permissions.
 
 The skill deliberately does not override human approval, security policy, or tool availability; those boundaries are explicit mission states.
 

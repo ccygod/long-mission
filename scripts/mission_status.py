@@ -18,6 +18,7 @@ def main() -> int:
         "status": state.get("status"),
         "iteration": state.get("iteration"),
         "max_iterations": state.get("max_iterations"),
+        "iteration_policy": state.get("iteration_policy", {}),
         "no_progress_count": state.get("no_progress_count"),
         "next_action": state.get("next_action"),
         "blockers": state.get("blockers", []),

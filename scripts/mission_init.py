@@ -19,8 +19,16 @@ def main() -> int:
     parser.add_argument("--acceptance", action="append", default=[])
     parser.add_argument("--profile", choices=["standard", "visual_ui", "reference_ui", "capability_sensitive"], default="standard")
     parser.add_argument("--prd", type=Path, default=None, help="optional PRD/specification path")
-    parser.add_argument("--max-iterations", type=int, default=10)
+    parser.add_argument("--max-iterations", type=int, default=None, help="explicit total iteration cap; omit for adaptive execution")
+    parser.add_argument("--safety-cap", type=int, default=20, help="last-resort containment cap for adaptive execution")
+    parser.add_argument("--max-no-progress", type=int, default=3, help="consecutive no-progress iterations before replanning is required")
     args = parser.parse_args()
+    if args.max_iterations is not None and args.max_iterations < 1:
+        raise SystemExit("--max-iterations must be positive when provided")
+    if args.safety_cap < 1:
+        raise SystemExit("--safety-cap must be positive")
+    if args.max_no_progress < 1:
+        raise SystemExit("--max-no-progress must be positive")
     mission = args.mission_dir.expanduser().resolve()
     if (mission / "state.json").exists():
         raise SystemExit(f"refusing to overwrite existing mission: {mission}")
@@ -81,6 +89,11 @@ def main() -> int:
         "open_questions": args.acceptance.copy(),
         "iteration": 0,
         "max_iterations": args.max_iterations,
+        "iteration_policy": {
+            "mode": "fixed" if args.max_iterations is not None else "adaptive",
+            "safety_cap": args.safety_cap,
+            "max_no_progress": args.max_no_progress,
+        },
         "no_progress_count": 0,
         "last_progress_at": now(),
         "next_action": "Inspect the mission contract, then complete one bounded action.",

@@ -12,11 +12,19 @@ def main() -> int:
     parser.add_argument("mission_dir", type=Path)
     args = parser.parse_args()
     state = load_state(args.mission_dir.expanduser().resolve())
+    policy = state.get("iteration_policy") if isinstance(state.get("iteration_policy"), dict) else {}
+    if state.get("max_iterations") is None:
+        budget = (
+            f"adaptive (safety cap {policy.get('safety_cap', 20)}, "
+            f"max no-progress {policy.get('max_no_progress', 3)})"
+        )
+    else:
+        budget = str(state.get("max_iterations"))
     print(
         "Continue the active long-task mission from the durable ledger.\n"
         "从持久化账本继续当前长任务。\n"
         f"Objective: {state.get('objective')}\n目标：{state.get('objective')}\n"
-        f"Iteration: {state.get('iteration')} / {state.get('max_iterations')}\n迭代：{state.get('iteration')} / {state.get('max_iterations')}\n"
+        f"Iteration: {state.get('iteration')} / {budget}\n迭代：{state.get('iteration')} / {budget}\n"
         f"Next action: {state.get('next_action')}\n下一步：{state.get('next_action')}\n"
         f"Blockers: {state.get('blockers') or 'none'}\n阻塞项：{state.get('blockers') or '无'}\n"
         "Read state.json and PROGRESS.md before acting. Do one bounded action, record evidence, "
